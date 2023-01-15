@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- 告知spring，这些包中的类可能要交给spring管理 -->
+    <context:component-scan base-package="com.me.controller,com.me.service,com.me.dao"></context:component-scan>
+
+    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
+        <!-- 数据库连接信息 -->
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />
+        <property name="url" value="jdbc:mysql://localhost:3306/test_ssm?characherEncoding=utf8" />
+        <property name="username" value="root"/>
+        <property name="password" value="root"/>
+        <!-- 连接池管理信息 -->
+        <!-- 最大连接数 -->
+        <property name="maxTotal" value="100"/>
+        <!-- 最小空闲数 -->
+        <property name="minIdle" value="5"/>
+        <!-- 最大等待时间 -->
+        <property name="maxWaitMillis" value="2000"/>
+    </bean>
+
+    <!-- 管理mybatis的sessionFactory -->
+    <bean id="sessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="configLocation" value="classpath:mybatis-config.xml" />
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <!-- 管理事务 -->
+    <!-- 事务管理者 -->
+    <bean id="manager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!-- 事务管理策略 -->
+    <tx:advice id="txAdvice" transaction-manager="manager">
+        <tx:attributes>
+            <tx:method name="save*" isolation="READ_COMMITTED" propagation="REQUIRED" ></tx:method>
+            <tx:method name="add*" isolation="READ_COMMITTED" propagation="REQUIRED" ></tx:method>
+            <tx:method name="delete*" isolation="READ_COMMITTED" propagation="REQUIRED" ></tx:method>
+            <tx:method name="remove*" isolation="READ_COMMITTED" propagation="REQUIRED" ></tx:method>
+            <tx:method name="update*" isolation="READ_COMMITTED" propagation="REQUIRED" ></tx:method>
+            <tx:method name="*" read-only="true"></tx:method>
+        </tx:attributes>
+    </tx:advice>
+    <!-- 事务管理时间点(切入点) -->
+    <aop:config>
+        <aop:advisor advice-ref="txAdvice" pointcut="execution(* com.me.service.*.*(..))"></aop:advisor>
+    </aop:config>
+</beans>
